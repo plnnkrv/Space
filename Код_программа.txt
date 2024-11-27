@@ -1,0 +1,128 @@
+#include <iostream>
+#include <vector>
+#include <algorithm>
+#include <cassert>
+
+using namespace std;
+
+// Сортировка вставками
+void insertionSort(vector<int>& arr, int left, int right) {
+    for (int i = left + 1; i <= right; ++i) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= left && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            --j;
+        }
+        arr[j + 1] = key;
+    }
+}
+
+// Поиск минимальной длины подмассива для сортировки
+int minRunLength(int n) {
+    assert(n > 0);
+    int r = 0;
+    while (n >= 64) {
+        r |= n & 1;
+        n >>= 1;
+    }
+    return n + r;
+}
+
+// Слияние двух отсортированных подмассивов с галопом
+void merge(vector<int>& arr, int l, int m, int r) {
+    int len1 = m - l + 1;
+    int len2 = r - m;
+
+    vector<int> left(len1);
+    vector<int> right(len2);
+
+    for (int i = 0; i < len1; ++i)
+        left[i] = arr[l + i];
+    for (int i = 0; i < len2; ++i)
+        right[i] = arr[m + 1 + i];
+
+    int i = 0, j = 0, k = l;
+
+    while (i < len1 && j < len2) {
+        if (left[i] <= right[j]) {
+            arr[k] = left[i];
+            i++;
+        }
+        else {
+            arr[k] = right[j];
+            j++;
+        }
+        k++;
+    }
+
+    while (i < len1) {
+        arr[k] = left[i];
+        i++;
+        k++;
+    }
+
+    while (j < len2) {
+        arr[k] = right[j];
+        j++;
+        k++;
+    }
+}
+
+
+void timSort(vector<int>& arr) {
+    int n = arr.size();
+    int minRun = minRunLength(n);
+
+    // Сортировка вставками небольших подмассивов
+    for (int i = 0; i < n; i += minRun) {
+        insertionSort(arr, i, min(i + minRun - 1, n - 1));
+    }
+
+    // Слияние отсортированных подмассивов
+    for (int size = minRun; size < n; size *= 2) {
+        for (int left = 0; left < n; left += 2 * size) {
+            int mid = min(left + size - 1, n - 1);
+            int right = min(left + 2 * size - 1, n - 1);
+            merge(arr, left, mid, right);
+        }
+    }
+}
+
+
+int main() {
+    setlocale(0, "");
+    int n;
+
+    cout << "Введите размер массива: ";
+    cin >> n;
+
+    if (n <= 0) {
+        cerr << "Размер массива должен быть положительным числом." << endl;
+        return 1; // Возвращаем код ошибки
+    }
+
+    vector<int> arr(n);
+    srand(time(0)); // Инициализация генератора случайных чисел
+
+    // Заполнение массива случайными числами
+    for (int i = 0; i < n; ++i) {
+        arr[i] = rand() % 100; // Случайные числа от 0 до 99
+    }
+
+    cout << "Исходный массив: ";
+    for (int x : arr) {
+        cout << x << " ";
+    }
+    cout << endl;
+
+    timSort(arr);
+
+    cout << "Отсортированный массив: ";
+    for (int x : arr) {
+        cout << x << " ";
+    }
+    cout << endl;
+
+    return 0;
+}
